@@ -120,7 +120,7 @@ namespace Character {
 						iIndex += Line_Length(line) + 1;
 					}
 
-					iIndex += Column;
+					Column > Line_Length(Line) ? iIndex += Line_Length(Line) : iIndex += Column;
 
 					return iIndex;
 				}
@@ -167,7 +167,8 @@ namespace Character {
 
 				void Selection() {
 
-					text.erase(Selection::IndexLowest, Selection::IndexHighest);
+					text.erase(Selection::Get::Lowest(), Selection::Get::Highest() - Selection::Get::Lowest() + 1);
+					Selection::Set::Both(Selection::Get::Lowest());
 
 				}
 

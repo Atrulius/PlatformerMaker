@@ -38,7 +38,7 @@ sf::Texture glow;
 sf::Texture txtrTransparency_Pattern;
 
 sf::Texture txtrStatic_Block[5][5][3];
-sf::Texture txtrDynamic_Block[5][5];
+sf::Texture txtrDynamic_Block[5][5][4];
 
 Game::Particle_Group pgCharacter;
 
@@ -65,8 +65,7 @@ const bool Game::running() const
 }
 
 Game::Game()
-{
-
+{ 
 	pgCharacter.iLifetime = 350;
 
 	pgCharacter.fStart_Size_X = 8;		pgCharacter.fStart_Size_X_PM = 2;
@@ -125,10 +124,12 @@ Game::Game()
 						}
 					}
 				}
-				imgDynamic_Block[i][x].create(8, 8);
-				for (int pY = 0; pY < 8; pY++) {
-					for (int pX = 0; pX < 8; pX++) {
-						imgDynamic_Block[i][x].setPixel(pX, pY, sf::Color(0, 0, 0, 0));
+				for (int img = 0; img < 4; img++) {
+					imgDynamic_Block[i][x][img].create(4, 4);
+					for (int pY = 0; pY < 4; pY++) {
+						for (int pX = 0; pX < 4; pX++) {
+							imgDynamic_Block[i][x][img].setPixel(pX, pY, sf::Color(0, 0, 0, 0));
+						}
 					}
 				}
 			}
@@ -194,14 +195,17 @@ Game::Game()
 				}
 			}
 			for (int x = 0; x < 5; x++) {
-				imgDynamic_Block[i][x].create(8, 8);
-				for (int pY = 0; pY < 8; pY++) {
-					for (int pX = 0; pX < 8; pX++) {
-						imgDynamic_Block[i][x].setPixel(pX, pY, sf::Color(file[num], file[num + 1], file[num + 2], file[num + 3])); num += 4;
+				for (int img = 0; img < 4; img++) {
+					imgDynamic_Block[i][x][img].create(4, 4);
+				}
+				for (int pY = 0; pY < 4; pY++) {
+					for (int img = 0; img < 4; img++) {
+						for (int pX = 0; pX < 4; pX++) {
+							imgDynamic_Block[i][x][img].setPixel(pX, pY, sf::Color(file[num], file[num + 1], file[num + 2], file[num + 3])); num += 4;
+						}
 					}
 				}
 			}
-
 
 			for (int j = 0; j < 2; j++) {
 				for (int k = 0; k < 4; k++) {
@@ -225,11 +229,12 @@ Game::Game()
 		}
 	}
 
-	//ShowWindow(GetConsoleWindow(), SW_HIDE);
+	bCurrent_Tool_Active[0] = true;
+	bCurrent_Tool_Active[1] = false;
+	bCurrent_Tool_Active[2] = false;
+	bCurrent_Tool_Active[3] = false;
 
-	for (int world = 0; world < 5; world++) {
-		//player.setTexture(character[world]);
-	}
+	//ShowWindow(GetConsoleWindow(), SW_HIDE);
 
 	icon.loadFromFile("images/extra/icon.png");
 
@@ -257,7 +262,9 @@ Game::Game()
 			for (int y = 0; y < 3; y++) {
 				txtrStatic_Block[world][x][y].loadFromImage(imgStatic_Block[world][x][y]);
 			}
-			txtrDynamic_Block[world][x].loadFromImage(imgDynamic_Block[world][x]);
+			for (int img = 0; img < 4; img++) {
+				txtrDynamic_Block[world][x][img].loadFromImage(imgDynamic_Block[world][x][img]);
+			}
 		}
 	}
 
@@ -477,8 +484,8 @@ void Game::pollEvents()
 			if (fCamera_Position_X < 0 * fGrid_Cell_Size) {
 				fCamera_Position_X = 0;
 			}
-			if (fCamera_Position_X - iEditor_Sidebar_Width > 60 * fGrid_Cell_Size) {
-				fCamera_Position_X = iEditor_Sidebar_Width + 60 * fGrid_Cell_Size;
+			if (fCamera_Position_X > 60 * fGrid_Cell_Size) {
+				fCamera_Position_X = 60 * fGrid_Cell_Size;
 			}
 		}
 		if (event.type == sf::Event::KeyReleased) {
@@ -610,25 +617,25 @@ void Game::Update()
 	iLevel_Sound = iCurrent_Chapter;
 	if (bEditing) {
 		if (!bUsed_Editor) {
-			PlaySound(TEXT("sounds/editor.wav"), NULL, SND_ASYNC | SND_LOOP);
+			//PlaySound(TEXT("sounds/editor.wav"), NULL, SND_ASYNC | SND_LOOP);
 		}
 		bUsed_Editor = true;
 	}
 	else {
 		if (iLevel_Sound == 0 && (iLast_Level_Sound != 0 || bUsed_Editor)) {
-			sndLevelMusic[0].play();
+			//sndLevelMusic[0].play();
 		}
 		if (iLevel_Sound == 1 && (iLast_Level_Sound != 1 || bUsed_Editor)) {
-			sndLevelMusic[1].play();
+			//sndLevelMusic[1].play();
 		}
 		if (iLevel_Sound == 2 && (iLast_Level_Sound != 2 || bUsed_Editor)) {
-			sndLevelMusic[2].play();
+			//sndLevelMusic[2].play();
 		}
 		if (iLevel_Sound == 3 && (iLast_Level_Sound != 3 || bUsed_Editor)) {
-			sndLevelMusic[3].play();
+			//sndLevelMusic[3].play();
 		}
 		if (iLevel_Sound == 4 && (iLast_Level_Sound != 4 || bUsed_Editor)) {
-			sndLevelMusic[4].play();
+			//sndLevelMusic[4].play();
 		}
 		bUsed_Editor = false;
 	}
@@ -929,7 +936,7 @@ void Game::Update_Editor() {
 }
 
 void Game::Update_Editor_Layer_1() {
-	if (mouseX > 0 && mouseX < 500 - iEditor_Sidebar_Width && mouseY > 0 && mouseY < 500 && window_Is_Active && !bEditor_Resizing) {
+	if (mouseX > 0 && mouseX < 500 && mouseY > 0 && mouseY < 500 && window_Is_Active && !bEditor_Resizing) {
 		if (bButton_Held_Mouse1 || bButton_Released_Mouse1) {
 			for (int y = 0; y < 20; y++) {
 				for (int x = 0; x < 80; x++) {
@@ -1443,7 +1450,7 @@ void Game::Draw_Menu() {
 				Goto_Chapter(i);
 			}
 		}
-		window->draw(rect);
+		Fancy_Rect(rect, 10);
 		btnText = "save " + to_string(i + 1);
 		Attatch_Text_to_Rect(rect, btnText, "StokkenesIT", sf::Color(255, 255, 255), 1, true);
 	}
@@ -1466,7 +1473,7 @@ void Game::Draw_Menu() {
 			rect.setFillColor(sf::Color(11, 11, 11, 255));
 		}
 	}
-	window->draw(rect);
+	Fancy_Rect(rect, 10);
 	Attatch_Text_to_Rect(rect, "<", "StokkenesIT", sf::Color(255, 255, 255, 255), -1, true);
 }
 
@@ -1475,7 +1482,7 @@ void Game::Draw_Editor_Menu() {
 	sf::String btnText;
 	rect.setSize(sf::Vector2f(230, 40));
 	bool btnVisible;
-	for (int i = 0; i < 6; i++) {
+	for (int i = 0; i < 5; i++) {
 		btnVisible = i < 2 || bEditing;
 		rect.setPosition(475 - rect.getSize().x, 475 - rect.getSize().y - float(float(rect.getSize().y) * 1.5) * i);
 		if (Mouse_is_Hovering_Rect(rect)) {
@@ -1513,15 +1520,10 @@ void Game::Draw_Editor_Menu() {
 					break;
 				case 3:
 					if (btnVisible) {
-						bEditing_Blocks = true;
-					}
-					break;
-				case 4:
-					if (btnVisible) {
 						bEditing_Particles = true;
 					}
 					break;
-				case 5:
+				case 4:
 					if (btnVisible) {
 						bEditing_Song = true;
 					}
@@ -1538,7 +1540,7 @@ void Game::Draw_Editor_Menu() {
 		else {
 			rect.setFillColor(sf::Color(255, 255, 255, btnVisible * 255));
 		}
-		window->draw(rect);
+		Fancy_Rect(rect, 10);
 		switch (i) {
 		case 0:
 			btnText = "main menu";
@@ -1550,12 +1552,9 @@ void Game::Draw_Editor_Menu() {
 			bEditing ? btnText = "character" : btnText = "";
 			break;
 		case 3:
-			bEditing ? btnText = "blocks" : btnText = "";
-			break;
-		case 4:
 			bEditing ? btnText = "particles" : btnText = "";
 			break;
-		case 5:
+		case 4:
 			bEditing ? btnText = "song" : btnText = "";
 			break;
 		}
@@ -1597,13 +1596,13 @@ void Game::Draw_Character_Menu() {
 			rect.setFillColor(sf::Color(11, 11, 11, 255));
 		}
 	}
-	window->draw(rect);
+	Fancy_Rect(rect, 10);
 	Attatch_Text_to_Rect(rect, "back", "StokkenesIT", sf::Color(255, 255, 255, 255), 0, true);
 
 	rect.setSize(sf::Vector2f(float(game_Width) / 4 + 10, float(game_Height) / 4 + 10));
 	rect.setPosition(float(game_Width) / 8 * 5 - 5, float(game_Height) / 8 * 1 - 5);
 	rect.setFillColor(sf::Color(15, 15, 15));
-	window->draw(rect);
+	Fancy_Rect(rect, 5);
 
 	sf::Sprite sprtTransparency_Pattern;
 
@@ -1638,68 +1637,68 @@ void Game::Draw_Character_Menu() {
 		}
 	}
 
-	rect.setSize(sf::Vector2f(125, 50));
-	rect.setPosition(25, game_Height - 25 - rect.getSize().y);
-	rect.setFillColor(sf::Color(15, 15, 15, 255));
-	if (Mouse_is_Hovering_Rect(rect)) {
-		if (bButton_Released_Mouse1) {
-			rect.setFillColor(sf::Color(15, 15, 15, 255));
-			bEditing_Character_Text = true;
-			return;
-		}
-		else if (bButton_Held_Mouse1) {
-			rect.setFillColor(sf::Color(5, 5, 5, 255));
-		}
-		else {
-			rect.setFillColor(sf::Color(11, 11, 11, 255));
-		}
-	}
-	window->draw(rect);
-	Attatch_Text_to_Rect(rect, "text", "StokkenesIT", sf::Color(255, 255, 255, 255), 0, true);
-
-	//sf::String btnText;
-
-	//for (int i = 0; i < 5; i++) {
-	//	rect.setSize(sf::Vector2f(175, 50));
-	//	rect.setPosition(25, 25 + float(float(i) / 4) * float(game_Width - 50 - rect.getSize().y));
-	//	rect.setFillColor(sf::Color(15, 15, 15, 255));
-	//	if (Mouse_is_Hovering_Rect(rect)) {
-	//		if (bButton_Released_Mouse1) {
-	//			if (i != 4) {
-	//				iControl_Editing = i;
-	//				bEditing_Controls = true;
-	//			}
-	//			else {
-	//				bEditing_Controls_Extra = true;
-	//			}
-	//		}
-	//		else if (bButton_Held_Mouse1) {
-	//			rect.setFillColor(sf::Color(5, 5, 5, 255));
-	//		}
-	//		else {
-	//			rect.setFillColor(sf::Color(11, 11, 11, 255));
-	//		}
+	//rect.setSize(sf::Vector2f(125, 50));
+	//rect.setPosition(25, game_Height - 25 - rect.getSize().y);
+	//rect.setFillColor(sf::Color(15, 15, 15, 255));
+	//if (Mouse_is_Hovering_Rect(rect)) {
+	//	if (bButton_Released_Mouse1) {
+	//		rect.setFillColor(sf::Color(15, 15, 15, 255));
+	//		bEditing_Character_Text = true;
+	//		return;
 	//	}
-	//	switch (i) {
-	//	case 0:
-	//		btnText = "up";
-	//		break;
-	//	case 1:
-	//		btnText = "down";
-	//		break;
-	//	case 2:
-	//		btnText = "left";
-	//		break;
-	//	case 3:
-	//		btnText = "right";
-	//		break;
-	//	case 4:
-	//		btnText = "extra";
-	//		break;
+	//	else if (bButton_Held_Mouse1) {
+	//		rect.setFillColor(sf::Color(5, 5, 5, 255));
 	//	}
-	//	window->draw(rect);
-	//	Attatch_Text_to_Rect(rect, btnText, "StokkenesIT", sf::Color(255, 255, 255, 255), 0, true);
+	//	else {
+	//		rect.setFillColor(sf::Color(11, 11, 11, 255));
+	//	}
 	//}
+	//Fancy_Rect(rect, 10);
+	//Attatch_Text_to_Rect(rect, "text", "StokkenesIT", sf::Color(255, 255, 255, 255), 0, true);
+
+	sf::String btnText;
+
+	for (int i = 0; i < 5; i++) {
+		rect.setSize(sf::Vector2f(175, 50));
+		rect.setPosition(25, 25 + float(float(i) / 4) * float(game_Width - 50 - rect.getSize().y));
+		rect.setFillColor(sf::Color(15, 15, 15, 255));
+		if (Mouse_is_Hovering_Rect(rect)) {
+			if (bButton_Released_Mouse1) {
+				if (i != 4) {
+					iControl_Editing = i;
+					bEditing_Controls = true;
+				}
+				else {
+					bEditing_Controls_Extra = true;
+				}
+			}
+			else if (bButton_Held_Mouse1) {
+				rect.setFillColor(sf::Color(5, 5, 5, 255));
+			}
+			else {
+				rect.setFillColor(sf::Color(11, 11, 11, 255));
+			}
+		}
+		switch (i) {
+		case 0:
+			btnText = "up";
+			break;
+		case 1:
+			btnText = "down";
+			break;
+		case 2:
+			btnText = "left";
+			break;
+		case 3:
+			btnText = "right";
+			break;
+		case 4:
+			btnText = "extra";
+			break;
+		}
+		Fancy_Rect(rect, 10);
+		Attatch_Text_to_Rect(rect, btnText, "StokkenesIT", sf::Color(255, 255, 255, 255), 0, true);
+	}
 }
 
 void Game::Draw_Character_Text() {
@@ -1715,10 +1714,20 @@ void Game::Draw_Character_Text() {
 	}
 
 	if (bReturn) Type("\n");
-	if (bErase) { if (Selection::Get::Highest() == Selection::Get::Lowest()) { if (Selection::Get::Lowest() > 0) Cut::Back(); } else Cut::Selection(); }
-	if (bDelete) Selection::Get::Highest() == Selection::Get::Lowest() ? Cut::Front() : Cut::Selection();
+
+	if (bErase) { if (Selection::Get::Highest() == Selection::Get::Lowest()) { if (Selection::Get::Lowest() > 0) Cut::Back(); } else Cut::Selection(); };
+	if (bDelete) { if (Selection::Get::Highest() == Selection::Get::Lowest()) { if (Selection::Get::Highest() < Get::Text().length()) Cut::Front(); } else Cut::Selection(); };
 
 	//Text(Get::Text(), "StokkenesIT", 25, 75, 25, sf::Color(255, 255, 255, 255), -1, 1);
+
+	if (mouseX > 25 && mouseX < game_Width - 25 && mouseY > 25 && mouseY < game_Height - 25) {
+		if (bButton_Held_Mouse1) {
+			Selection::Set::B(Get::Index_From_Point(floor(float(mouseY) / 25) - 1, floor(float(mouseX) / 25) - 1));
+			if (bButton_Clicked_Mouse1) {
+				Selection::Set::A(Get::Index_From_Point(floor(float(mouseY) / 25) - 1, floor(float(mouseX) / 25) - 1));
+			}
+		}
+	}
 
 	int index = 0;
 
@@ -1740,14 +1749,6 @@ void Game::Draw_Character_Text() {
 			if (Get::Text().at(index) == '\n') {
 				break;
 			}
-			if (index ) {
-				sf::RectangleShape rect;
-				rect.setPosition(x * 25, y * 25);
-				rect.setSize(sf::Vector2f(25, 25));
-				rect.setFillColor(sf::Color(255, 255, 255, 127));
-				window->draw(rect);
-
-			}
 			text.setString(string(1, Get::Text().at(index)));
 			text.setPosition(x * 25, y * 25);
 			window->draw(text);
@@ -1758,6 +1759,26 @@ void Game::Draw_Character_Text() {
 
 		index++;
 
+	}
+
+	bool Selected = true;
+
+	for (int y = 0; y < 18; y++) {
+		for (int x = 0; x < 18; x++) {
+			if (Selection::Get::Lowest() == Get::Index_From_Point(y, x)) {
+				Selected = true;
+			}
+			if (Selected) {
+				sf::RectangleShape rect;
+				rect.setPosition((x + 1) * 25, (y + 1) * 25);
+				rect.setSize(sf::Vector2f(25, 25));
+				rect.setFillColor(sf::Color(255, 255, 255, 127));
+				Fancy_Rect(rect, 10);
+			}
+			if (Selection::Get::Highest() == Get::Index_From_Point(y, x)) {
+				Selected = false;
+			}
+		}
 	}
 }
 
@@ -1781,7 +1802,7 @@ void Game::Draw_Controls_Menu() {
 			rect.setFillColor(sf::Color(11, 11, 11, 255));
 		}
 	}
-	window->draw(rect);
+	Fancy_Rect(rect, 10);
 	Attatch_Text_to_Rect(rect, "back", "StokkenesIT", sf::Color(255, 255, 255, 255), 0, true);
 
 	switch (iControl_Editing) {
@@ -1805,7 +1826,7 @@ void Game::Draw_Controls_Menu() {
 		rect.setSize(sf::Vector2f(125, 282.5f));
 		rect.setPosition(25 + float(float(condition) / 2) * (game_Width - 50 - rect.getSize().x), 25);
 		rect.setFillColor(sf::Color(11, 11, 11));
-		window->draw(rect);
+		Fancy_Rect(rect, 10);
 		switch (condition) {
 		case 0:
 			btnText = "clicked";
@@ -1828,7 +1849,7 @@ void Game::Draw_Controls_Menu() {
 			rect.setSize(sf::Vector2f(100, 70));
 			rect.setPosition(37.5f + float(float(condition) / 2) * (game_Width - 75 - 100), 60 + 82.5f * action);
 			rect.setFillColor(sf::Color(7, 7, 7));
-			window->draw(rect);
+			Fancy_Rect(rect, 5);
 			switch (condition) {
 			case 0:
 				switch (action) {
@@ -1905,7 +1926,7 @@ void Game::Draw_Controls_Extra_Menu() {
 			rect.setFillColor(sf::Color(11, 11, 11, 255));
 		}
 	}
-	window->draw(rect);
+	Fancy_Rect(rect, 10);
 	Attatch_Text_to_Rect(rect, "back", "StokkenesIT", sf::Color(255, 255, 255, 255), 0, true);
 
 	Text("You are currently\nediting extra\nproperties", "StokkenesIT", 25, 425, 32, sf::Color(23, 23, 23), -1, false);
@@ -1913,7 +1934,7 @@ void Game::Draw_Controls_Extra_Menu() {
 	rect.setSize(sf::Vector2f(450, 337.5));
 	rect.setPosition(25, 25);
 	rect.setFillColor(sf::Color(11, 11, 11));
-	window->draw(rect);
+	Fancy_Rect(rect, 10);
 
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 4; j++) {
@@ -1947,7 +1968,7 @@ void Game::Draw_Controls_Extra_Menu() {
 			rect.setSize(sf::Vector2f(100, 70));
 			rect.setPosition(37.5f + float(float(i) / 2) * (game_Width - 75 - 100), 40 + 82.5f * j);
 			rect.setFillColor(sf::Color(7, 7, 7));
-			if (!(i == 2 && j == 3)) window->draw(rect);
+			if (!(i == 2 && j == 3)) Fancy_Rect(rect, 10);
 
 			Text(btnText, "StokkenesIT", rect.getPosition().x + 3, 46 + 82.5f * j, 17, sf::Color(223, 223, 223), -1, true);
 
@@ -1970,13 +1991,13 @@ void Game::Draw_Controls_Extra_Menu() {
 }
 
 void Game::Draw_Blocks_Menu() {
-	for (int y = 0; y < 3; y++) {
-		for (int x = 0; x < 5; x++) {
-			if (bStatic_Block_Selected[x][y]) { Draw_Paint_Menu(bStatic_Block_Selected[x][y], imgStatic_Block[iCurrent_Chapter][x][y]); return; }
-		}
-	}
 	for (int x = 0; x < 5; x++) {
 		if (bDynamic_Block_Selected[x]) { Draw_Blocks_Dynamic_Menu(x); return; }
+	}
+	for (int y = 0; y < 3; y++) {
+		for (int x = 0; x < 5; x++) {
+			if (bStatic_Block_Selected[x][y]) { Draw_Paint_Menu(bStatic_Block_Selected[x][y], imgStatic_Block[iCurrent_Chapter][x][y]); txtrStatic_Block[iCurrent_Chapter][x][y].loadFromImage(imgStatic_Block[iCurrent_Chapter][x][y]); return; }
+		}
 	}
 
 	sf::RectangleShape rect;
@@ -1986,7 +2007,7 @@ void Game::Draw_Blocks_Menu() {
 	rect.setPosition(2 * 25, 25);
 	rect.setSize(sf::Vector2f(16 * 25, 15 * 25));
 	rect.setFillColor(sf::Color(11, 11, 11));
-	window->draw(rect);
+	Fancy_Rect(rect, 10);
 
 	rect.setSize(sf::Vector2f(2 * 25, 2 * 25));
 
@@ -2012,7 +2033,7 @@ void Game::Draw_Blocks_Menu() {
 			if (Mouse_is_Hovering_Rect(rect)) {
 				rect.setFillColor(sf::Color(0, 0, 0, 63));
 				if (bButton_Held_Mouse1 || bButton_Held_Mouse2) rect.setFillColor(sf::Color(0, 0, 0, 127));
-				if (bButton_Released_Mouse1) { iBlock = x + y * 5 + 1; bEditing_Blocks = false; cout << iBlock << "\n"; }
+				if (bButton_Released_Mouse1) { iBlock = x + y * 5 + 1; bEditing_Blocks = false; }
 				if (bButton_Released_Mouse2) bStatic_Block_Selected[x][y] = true;
 			}
 
@@ -2046,11 +2067,23 @@ void Game::Draw_Blocks_Menu() {
 			if (bButton_Released_Mouse2) bDynamic_Block_Selected[x] = true;
 		}
 
-		sprtBlock.setTexture(txtrDynamic_Block[iCurrent_Chapter][x]);
-		sprtBlock.setPosition((x + 1) * 3 * 25, 13 * 25);
-		sprtBlock.setScale(float(2) * 25 / 8, float(2) * 25 / 8);
+		sf::Sprite sprtBlock;
 
-		window->draw(sprtBlock);
+		sprtBlock.setTexture(txtrDynamic_Block[iCurrent_Chapter][x][0]);
+		sprtBlock.setScale(float(2) * 25 / 8, float(2) * 25 / 8);
+		sprtBlock.setOrigin(2, 2);
+
+		for (int Block_X = 0; Block_X < 2; Block_X++) {
+			for (int Block_Y = 0; Block_Y < 2; Block_Y++) {
+				if (Block_X == 0 && Block_Y == 0) sprtBlock.setRotation(0);
+				if (Block_X == 1 && Block_Y == 0) sprtBlock.setRotation(90);
+				if (Block_X == 0 && Block_Y == 1) sprtBlock.setRotation(-90);
+				if (Block_X == 1 && Block_Y == 1) sprtBlock.setRotation(180);
+				sprtBlock.setPosition((x + 1) * 3 * 25 + Block_X * 25 + 2.f / 4 * 25, 13 * 25 + Block_Y * 25 + 2.f / 4 * 25);
+				window->draw(sprtBlock);
+			}
+		}
+
 		window->draw(rect);
 	}
 }
@@ -2066,7 +2099,12 @@ void Game::Draw_Paint_Menu(bool &The_Boolean, sf::Image &The_Image) {
 		if (bButton_Released_Mouse1) {
 			rect.setFillColor(sf::Color(15, 15, 15, 255));
 			The_Boolean = false;
-			for (int i = 0; i < 8; i++) for (int j = 0; j < 8; j++) bPaint_Select_Tool[i][j] = false;
+			for (int i = 0; i < The_Image.getSize().x; i++) for (int j = 0; j < The_Image.getSize().y; j++) bPaint_Select_Tool[i][j] = false;
+			bCurrent_Tool_Active[0] = true;
+			bCurrent_Tool_Active[1] = false;
+			bCurrent_Tool_Active[2] = false;
+			bCurrent_Tool_Active[3] = false;
+
 			return;
 		}
 		else if (bButton_Held_Mouse1) {
@@ -2076,15 +2114,28 @@ void Game::Draw_Paint_Menu(bool &The_Boolean, sf::Image &The_Image) {
 		rect.setFillColor(sf::Color(11, 11, 11, 255));
 		}
 	}
-	window->draw(rect);
+	Fancy_Rect(rect, 10);
 	Attatch_Text_to_Rect(rect, "back", "StokkenesIT", sf::Color(255, 255, 255, 255), 0, true);
 
 	rect.setPosition(1 * 25, 1 * 25);
 	rect.setSize(sf::Vector2f(4 * 25, 18 * 25));
 	rect.setFillColor(sf::Color(13, 13, 13));
-	window->draw(rect);
+	Fancy_Rect(rect, 5);
 
-	Text("tools", "StokkenesIT", 1 * 25, 1 * 25, 25, sf::Color(255, 255, 255), -1, true);
+	Text("tools", "StokkenesIT", 1 * 25 + 2 * 25, 1 * 25, 25, sf::Color(255, 255, 255), 0, true);
+
+	sprt.setTexture(txtrTransparency_Pattern);
+	sprt.setScale(sf::Vector2f(0.25f * 1 * 25, 0.25f * 1 * 25));
+
+	for (int x = 0; x < 6; x++) {
+		sprt.setPosition(1.5f * 25 + x * 0.5f * 25, 2 * 25);
+		window->draw(sprt);
+	}
+
+	rect.setPosition(1.5f * 25, 2 * 25);
+	rect.setSize(sf::Vector2f(3 * 25, 0.5f * 25));
+	rect.setFillColor(colCurrent_Drawing_Color);
+	window->draw(rect);
 
 	for (int color = 0; color < 4; color++) {
 		iCurrent_Int = color == 0 ? colCurrent_Drawing_Color.r : color == 1 ? colCurrent_Drawing_Color.g : color == 2 ? colCurrent_Drawing_Color.b : colCurrent_Drawing_Color.a;
@@ -2130,8 +2181,8 @@ void Game::Draw_Paint_Menu(bool &The_Boolean, sf::Image &The_Image) {
 
 	bPaint_Select_Tool_Used = false;
 
-	for (int i = 0; i < 8; i++) {
-		for (int j = 0; j < 8; j++) {
+	for (int i = 0; i < The_Image.getSize().x; i++) {
+		for (int j = 0; j < The_Image.getSize().y; j++) {
 			if (bPaint_Select_Tool[i][j]) bPaint_Select_Tool_Used = true;
 		}
 	}
@@ -2139,47 +2190,46 @@ void Game::Draw_Paint_Menu(bool &The_Boolean, sf::Image &The_Image) {
 	rect.setPosition(9 * 25, 1 * 25);
 	rect.setSize(sf::Vector2f(10 * 25, 10 * 25));
 	rect.setFillColor(sf::Color(15, 15, 15));
-	window->draw(rect);
+	Fancy_Rect(rect, 25);
 
-	sprt.setTexture(txtrTransparency_Pattern);
-	sprt.setScale(sf::Vector2f(0.5f * 1 * 25, 0.5f * 1 * 25));
+	sprt.setScale((200.f / The_Image.getSize().x) / 2, (200.f / The_Image.getSize().y) / 2);
 
-	for (int x = 0; x < 8; x++) {
-		for (int y = 0; y < 8; y++) {
-			sprt.setPosition(10 * 25 + x * 25, 2 * 25 + y * 25);
+	for (int x = 0; x < The_Image.getSize().x; x++) {
+		for (int y = 0; y < The_Image.getSize().y; y++) {
+			sprt.setPosition(10 * 25 + x * (200.f / The_Image.getSize().x), 2 * 25 + y * (200.f / The_Image.getSize().y));
 			window->draw(sprt);
 		}
 	}
 
 	if (bCurrent_Tool_Active[0]) {
 		if (bButton_Held_Mouse1 || bButton_Held_Mouse2) {
-			int pixelX = floor(float(mouseX - 10 * 25) / 25);
-			int pixelY = floor(float(mouseY - 2 * 25) / 25);
-			if (pixelX >= 0 && pixelY >= 0 && pixelX <= 7 && pixelY <= 7 && (!bPaint_Select_Tool_Used || bPaint_Select_Tool[pixelX][pixelY])) The_Image.setPixel(pixelX, pixelY, bButton_Held_Mouse1 ? colCurrent_Drawing_Color : sf::Color(0, 0, 0, 0));
+			int pixelX = floor(float(mouseX - 10 * 25) / (200.f / The_Image.getSize().x));
+			int pixelY = floor(float(mouseY - 2 * 25) / (200.f / The_Image.getSize().y));
+			if (pixelX >= 0 && pixelY >= 0 && pixelX <= The_Image.getSize().x - 1 && pixelY <= The_Image.getSize().y - 1 && (!bPaint_Select_Tool_Used || bPaint_Select_Tool[pixelX][pixelY])) The_Image.setPixel(pixelX, pixelY, bButton_Held_Mouse1 ? colCurrent_Drawing_Color : sf::Color(0, 0, 0, 0));
 		}
 	}
 
 	if (bCurrent_Tool_Active[1]) {
 		if (bButton_Held_Mouse1) {
-			int pixelX = floor(float(mouseX - 10 * 25) / 25);
-			int pixelY = floor(float(mouseY - 2 * 25) / 25);
-			if (pixelX >= 0 && pixelY >= 0 && pixelX <= 7 && pixelY <= 7 && (!bPaint_Select_Tool_Used || bPaint_Select_Tool[pixelX][pixelY])) colCurrent_Drawing_Color = The_Image.getPixel(pixelX, pixelY);
+			int pixelX = floor(float(mouseX - 10 * 25) / (200.f / The_Image.getSize().x));
+			int pixelY = floor(float(mouseY - 2 * 25) / (200.f / The_Image.getSize().y));
+			if (pixelX >= 0 && pixelY >= 0 && pixelX <= The_Image.getSize().x - 1 && pixelY <= The_Image.getSize().y - 1 && (!bPaint_Select_Tool_Used || bPaint_Select_Tool[pixelX][pixelY])) colCurrent_Drawing_Color = The_Image.getPixel(pixelX, pixelY);
 		}
 	}
 
 	if (bCurrent_Tool_Active[2]) {
 		if (bButton_Clicked_Mouse1 || bButton_Clicked_Mouse2) {
-			int pixelX = floor(float(mouseX - 10 * 25) / 25);
-			int pixelY = floor(float(mouseY - 2 * 25) / 25);
-			if (pixelX >= 0 && pixelY >= 0 && pixelX <= 7 && pixelY <= 7 && (!bPaint_Select_Tool_Used || bPaint_Select_Tool[pixelX][pixelY])) The_Image = Draw_Paint_Fill(pixelX, pixelY, bButton_Clicked_Mouse1 ? colCurrent_Drawing_Color : sf::Color(0, 0, 0, 0), The_Image.getPixel(pixelX, pixelY), The_Image);
+			int pixelX = floor(float(mouseX - 10 * 25) / (200.f / The_Image.getSize().x));
+			int pixelY = floor(float(mouseY - 2 * 25) / (200.f / The_Image.getSize().y));
+			if (pixelX >= 0 && pixelY >= 0 && pixelX <= The_Image.getSize().x - 1 && pixelY <= The_Image.getSize().y - 1 && (!bPaint_Select_Tool_Used || bPaint_Select_Tool[pixelX][pixelY])) The_Image = Draw_Paint_Fill(pixelX, pixelY, bButton_Clicked_Mouse1 ? colCurrent_Drawing_Color : sf::Color(0, 0, 0, 0), The_Image.getPixel(pixelX, pixelY), The_Image);
 		}
 	}
 
 	if (bCurrent_Tool_Active[3]) {
 		if (bButton_Held_Mouse1 || bButton_Held_Mouse2) {
-			int pixelX = floor(float(mouseX - 10 * 25) / 25);
-			int pixelY = floor(float(mouseY - 2 * 25) / 25);
-			if (pixelX >= 0 && pixelY >= 0 && pixelX <= 7 && pixelY <= 7) bPaint_Select_Tool[pixelX][pixelY] = bButton_Held_Mouse1;
+			int pixelX = floor(float(mouseX - 10 * 25) / (200.f / The_Image.getSize().x));
+			int pixelY = floor(float(mouseY - 2 * 25) / (200.f / The_Image.getSize().y));
+			if (pixelX >= 0 && pixelY >= 0 && pixelX <= The_Image.getSize().x && pixelY <= The_Image.getSize().y) bPaint_Select_Tool[pixelX][pixelY] = bButton_Held_Mouse1;
 		}
 	}
 
@@ -2190,14 +2240,14 @@ void Game::Draw_Paint_Menu(bool &The_Boolean, sf::Image &The_Image) {
 	sprtBlock.setTexture(txtr);
 
 	sprtBlock.setPosition(10 * 25, 2 * 25);
-	sprtBlock.setScale(8.f * 25 / 8, 8.f * 25 / 8);
+	sprtBlock.setScale(8.f * 25 / The_Image.getSize().x, 8.f * 25 / The_Image.getSize().y);
 	window->draw(sprtBlock);
 
 	if (bPaint_Select_Tool_Used) {
 		rect.setSize(sf::Vector2f(1 * 25, 1 * 25));
 		rect.setFillColor(sf::Color(0, 0, 0, 127));
-		for (int i = 0; i < 8; i++) {
-			for (int j = 0; j < 8; j++) {
+		for (int i = 0; i < The_Image.getSize().x; i++) {
+			for (int j = 0; j < The_Image.getSize().y; j++) {
 				if (!bPaint_Select_Tool[i][j]) {
 					rect.setPosition(10 * 25 + i * 25, 2 * 25 + j * 25);
 					window->draw(rect);
@@ -2209,8 +2259,8 @@ void Game::Draw_Paint_Menu(bool &The_Boolean, sf::Image &The_Image) {
 
 sf::Image Game::Draw_Paint_Fill(int The_X, int The_Y, sf::Color The_Fill_Color, sf::Color The_Color_To_Fill, sf::Image The_Image) {
 	if (bPaint_Select_Tool_Used) { 
-		for (int x = 0; x < 8; x++) { 
-			for (int y = 0; y < 8; y++) { 
+		for (int x = 0; x < The_Image.getSize().x; x++) {
+			for (int y = 0; y < The_Image.getSize().y; y++) {
 				if (bPaint_Select_Tool[x][y]) The_Image.setPixel(x, y, The_Fill_Color); 
 			} 
 		} 
@@ -2218,18 +2268,25 @@ sf::Image Game::Draw_Paint_Fill(int The_X, int The_Y, sf::Color The_Fill_Color, 
 	else {
 		if (The_Fill_Color == The_Color_To_Fill) return The_Image;
 		The_Image.setPixel(The_X, The_Y, The_Fill_Color);
-		if (The_X > 0 && The_Image.getPixel(The_X - 1, The_Y) == The_Color_To_Fill) The_Image = Draw_Paint_Fill(The_X - 1, The_Y, The_Fill_Color, The_Color_To_Fill, The_Image);
-		if (The_Y > 0 && The_Image.getPixel(The_X, The_Y - 1) == The_Color_To_Fill) The_Image = Draw_Paint_Fill(The_X, The_Y - 1, The_Fill_Color, The_Color_To_Fill, The_Image);
-		if (The_X < 7 && The_Image.getPixel(The_X + 1, The_Y) == The_Color_To_Fill) The_Image = Draw_Paint_Fill(The_X + 1, The_Y, The_Fill_Color, The_Color_To_Fill, The_Image);
-		if (The_Y < 7 && The_Image.getPixel(The_X, The_Y + 1) == The_Color_To_Fill) The_Image = Draw_Paint_Fill(The_X, The_Y + 1, The_Fill_Color, The_Color_To_Fill, The_Image);
+		if (The_X > 0							&& The_Image.getPixel(The_X - 1, The_Y) == The_Color_To_Fill) The_Image = Draw_Paint_Fill(The_X - 1, The_Y, The_Fill_Color, The_Color_To_Fill, The_Image);
+		if (The_Y > 0							&& The_Image.getPixel(The_X, The_Y - 1) == The_Color_To_Fill) The_Image = Draw_Paint_Fill(The_X, The_Y - 1, The_Fill_Color, The_Color_To_Fill, The_Image);
+		if (The_X < The_Image.getSize().x - 1	&& The_Image.getPixel(The_X + 1, The_Y) == The_Color_To_Fill) The_Image = Draw_Paint_Fill(The_X + 1, The_Y, The_Fill_Color, The_Color_To_Fill, The_Image);
+		if (The_Y < The_Image.getSize().y - 1	&& The_Image.getPixel(The_X, The_Y + 1) == The_Color_To_Fill) The_Image = Draw_Paint_Fill(The_X, The_Y + 1, The_Fill_Color, The_Color_To_Fill, The_Image);
 	}
 	return The_Image;
 }
 
 void Game::Draw_Blocks_Dynamic_Menu(int x) {
+	for (int i = 0; i < 4; i++) {
+		if (bDynamic_Block_Corner_Selected[i]) { Draw_Paint_Menu(bDynamic_Block_Corner_Selected[i], imgDynamic_Block[iCurrent_Chapter][x][i]); txtrDynamic_Block[iCurrent_Chapter][x][i].loadFromImage(imgDynamic_Block[iCurrent_Chapter][x][i]); return; }
+	}
 	sf::RectangleShape rect;
+	sf::RectangleShape overlay;
+	sf::RectangleShape example;
+	sf::Sprite sprt;
+	sf::Sprite transparency;
 	rect.setSize(sf::Vector2f(125, 50));
-	rect.setPosition(game_Width - 25 - rect.getSize().x, game_Height - 25 - rect.getSize().y);
+	rect.setPosition(float(game_Width) / 2 - float(rect.getSize().x) / 2, game_Height - 25 - rect.getSize().y);
 	rect.setFillColor(sf::Color(15, 15, 15, 255));
 	if (Mouse_is_Hovering_Rect(rect)) {
 		if (bButton_Released_Mouse1) {
@@ -2244,8 +2301,76 @@ void Game::Draw_Blocks_Dynamic_Menu(int x) {
 			rect.setFillColor(sf::Color(11, 11, 11, 255));
 		}
 	}
-	window->draw(rect);
+	Fancy_Rect(rect, 10);
 	Attatch_Text_to_Rect(rect, "back", "StokkenesIT", sf::Color(255, 255, 255, 255), 0, true);
+
+	rect.setSize(sf::Vector2f(game_Width - 50, game_Height - 125));
+	rect.setPosition(25, 25);
+	rect.setFillColor(sf::Color(11, 11, 11));
+	Fancy_Rect(rect, 10);
+
+	rect.setSize(sf::Vector2f(135, 135));
+	rect.setFillColor(sf::Color(31, 31, 31));
+	sprt.setScale(125.f / 4, 125.f / 4);
+	transparency.setTexture(txtrTransparency_Pattern);
+	transparency.setScale(125.f / 4 / 2, 125.f / 4 / 2);
+	example.setSize(sf::Vector2f(60, 60));
+	example.setFillColor(sf::Color(23, 23, 23));
+	for (int sprtY = 0; sprtY < 2; sprtY++) {
+		for (int sprtX = 0; sprtX < 2; sprtX++) {
+			rect.setPosition(50 + sprtX * (game_Width - 50 - sprt.getScale().x * 4 - 50) - 5, 50 + sprtY * (game_Height - 125 - sprt.getScale().y * 4 - 50) - 5);
+			Fancy_Rect(rect, 5);
+			for (int trY = 0; trY < 4; trY++) {
+				for (int trX = 0; trX < 4; trX++) {
+					transparency.setPosition(50 + sprtX * (game_Width - 50 - sprt.getScale().x * 4 - 50) + sprt.getScale().x * trX, 50 + sprtY * (game_Height - 125 - sprt.getScale().y * 4 - 50) + sprt.getScale().y * trY);
+					window->draw(transparency);
+				}
+			}
+			sprt.setPosition(50 + sprtX * (game_Width - 50 - sprt.getScale().x * 4 - 50), 50 + sprtY * (game_Height - 125 - sprt.getScale().y * 4 - 50));
+			sprt.setTexture(txtrDynamic_Block[iCurrent_Chapter][x][sprtX + sprtY * 2]);
+			window->draw(sprt);
+			if (Mouse_is_Hovering_Rect(rect)) {
+				overlay.setPosition(50 + sprtX * (game_Width - 50 - sprt.getScale().x * 4 - 50), 50 + sprtY * (game_Height - 125 - sprt.getScale().y * 4 - 50));
+				overlay.setSize(sf::Vector2f(125, 125));
+				overlay.setFillColor(sf::Color(0, 0, 0, 63));
+				if (bButton_Held_Mouse1) {
+					overlay.setFillColor(sf::Color(0, 0, 0, 127));
+				}
+				if (bButton_Released_Mouse1) {
+					bDynamic_Block_Corner_Selected[sprtX + sprtY * 2] = true;
+					return;
+				}
+				window->draw(overlay);
+			}
+			example.setPosition(sprtX == 0 ? 185 : game_Width - example.getSize().x - 185, 112.5f + sprtY * (game_Height - 125 - sprt.getScale().y * 4 - 50) - float(example.getSize().y) / 2);
+			window->draw(example);
+
+			sf::RectangleShape imgExample;
+			imgExample.setSize(sf::Vector2f(float(example.getSize().x - 10) / 4, float(example.getSize().y - 10) / 4));
+			for (int pX = 0; pX < 4; pX++) {
+				for (int pY = 0; pY < 4; pY++) {
+					imgExample.setFillColor(sf::Color(0, 0, 0));
+					if (sprtX == 0 && sprtY == 0) {
+						if (pX == 0 || pY == 0) {
+							imgExample.setFillColor(sf::Color(255, 255, 255));
+						}
+					}
+					if (sprtX == 1 && sprtY == 0) {
+						if (pY == 0) {
+							imgExample.setFillColor(sf::Color(255, 255, 255));
+						}
+					}
+					if (sprtX == 0 && sprtY == 1) {
+						if (pX == 0 && pY == 0) {
+							imgExample.setFillColor(sf::Color(255, 255, 255));
+						}
+					}
+					imgExample.setPosition(example.getPosition().x + 5 + imgExample.getSize().x * pX, example.getPosition().y + 5 + imgExample.getSize().y * pY);
+					window->draw(imgExample);
+				}
+			}
+		}
+	}
 }
 
 void Game::Draw_Background_Menu(int x) {
@@ -2271,13 +2396,13 @@ void Game::Draw_Background_Menu(int x) {
 			rect.setFillColor(sf::Color(11, 11, 11, 255));
 		}
 	}
-	window->draw(rect);
+	Fancy_Rect(rect, 10);
 	Attatch_Text_to_Rect(rect, "back", "StokkenesIT", sf::Color(255, 255, 255, 255), 0, true);
 
 	rect.setPosition(25, 25);
 	rect.setSize(sf::Vector2f(395, 225));
 	rect.setFillColor(sf::Color(11, 11, 11));
-	window->draw(rect);
+	Fancy_Rect(rect, 10);
 
 	for (int layer = 0; layer < 3; layer++) {
 		switch (layer) {
@@ -2305,12 +2430,12 @@ void Game::Draw_Background_Menu(int x) {
 			rect.setPosition(380 - 2, 60 + 75 * layer - 2);
 			rect.setSize(sf::Vector2f(39, 39));
 			rect.setFillColor(sf::Color(7, 7, 7));
-			window->draw(rect);
+			Fancy_Rect(rect, 10);
 			
 			rect.setPosition(380, 60 + 75 * layer);
 			rect.setSize(sf::Vector2f(35, 35));
 			rect.setFillColor(layer == 0 ? bgTrigger[iCurrent_Chapter][x].color : sf::Color(0, 0, 0));
-			window->draw(rect);
+			Fancy_Rect(rect, 10);
 			
 			if (layer == 0) if (color == 0) bgTrigger[iCurrent_Chapter][x].color.r = iCurrent_Int;
 			if (layer == 0) if (color == 1) bgTrigger[iCurrent_Chapter][x].color.g = iCurrent_Int;
@@ -2339,13 +2464,13 @@ void Game::Draw_Particles_Menu() {
 			rect.setFillColor(sf::Color(11, 11, 11, 255));
 		}
 	}
-	window->draw(rect);
+	Fancy_Rect(rect, 10);
 	Attatch_Text_to_Rect(rect, "back", "StokkenesIT", sf::Color(255, 255, 255, 255), 0, true);
 
 	rect.setPosition(25, 25);
 	rect.setSize(sf::Vector2f(450, 205));
 	rect.setFillColor(sf::Color(11, 11, 11));
-	window->draw(rect);
+	Fancy_Rect(rect, 10);
 
 	Text("particles", "StokkenesIT", 30, 25, 32, sf::Color(255, 255, 255), -1, true);
 
@@ -2469,7 +2594,7 @@ void Game::Draw_Song_Menu() {
 			rect.setFillColor(sf::Color(11, 11, 11, 255));
 		}
 	}
-	window->draw(rect);
+	Fancy_Rect(rect, 10);
 	Attatch_Text_to_Rect(rect, "back", "StokkenesIT", sf::Color(255, 255, 255, 255), 0, true);
 
 
@@ -2496,7 +2621,7 @@ void Game::Draw_Song_Menu() {
 	if (bTyping_ID) {
 		rect.setFillColor(sf::Color(11, 11, 11, 255));
 	}
-	window->draw(rect);
+	Fancy_Rect(rect, 10);
 
 	if (bTyping_ID) {
 		for (int num = 0; num < 10; num++) {
@@ -2528,13 +2653,13 @@ void Game::Draw_Song_Menu() {
 			rect.setFillColor(sf::Color(11, 11, 11, 255));
 		}
 	}
-	window->draw(rect);
+	Fancy_Rect(rect, 10);
 	Attatch_Text_to_Rect(rect, "download", "StokkenesIT", sf::Color(255, 255, 255, 255), 0, true);
 
 	rect.setSize(sf::Vector2f(250, 50));
 	rect.setPosition(float(game_Width) / 2 - float(rect.getSize().x) / 2, 6 * 25);
 	rect.setFillColor(sf::Color(15, 15, 15, 255));
-	window->draw(rect);
+	Fancy_Rect(rect, 10);
 
 	Text("id : " + sMusic_Properties[iCurrent_Chapter][0], "StokkenesIT", rect.getPosition().x + 3, rect.getPosition().y + 25, 20, sf::Color(255, 255, 255, 255), -1, true);
 	Text(sMusic_Properties[iCurrent_Chapter][1], "StokkenesIT", rect.getPosition().x + 3, rect.getPosition().y, 20, sf::Color(255, 255, 255, 255), -1, true);
@@ -2556,7 +2681,7 @@ void Game::Draw_Song_Menu() {
 			rect.setFillColor(sf::Color(11, 11, 11, 255));
 		}
 	}
-	window->draw(rect);
+	Fancy_Rect(rect, 10);
 
 	if (!bMusic_Playtest) {
 		sf::CircleShape triangle(20, 3);
@@ -2569,9 +2694,9 @@ void Game::Draw_Song_Menu() {
 		rect.setPosition(rect.getPosition().x + 10, rect.getPosition().y + 10);
 		rect.setSize(sf::Vector2f(10, 30));
 		rect.setFillColor(sf::Color(255, 255, 255, 255));
-		window->draw(rect);
+		Fancy_Rect(rect, 10);
 		rect.setPosition(rect.getPosition().x + 20, rect.getPosition().y);
-		window->draw(rect);
+		Fancy_Rect(rect, 10);
 	}
 }
 
@@ -2606,7 +2731,7 @@ void Game::Draw_Start_Menu() {
 		else {
 			rect.setFillColor(sf::Color(255, 255, 255, 255));
 		}
-		window->draw(rect);
+		Fancy_Rect(rect, 10);
 		switch (i) {
 		case 0:
 			btnText = "exit";
@@ -2640,7 +2765,7 @@ void Game::Draw_Start_Menu() {
 		else {
 			rect.setFillColor(sf::Color(255, 255, 255, 255));
 		}
-		window->draw(rect);
+		Fancy_Rect(rect, 10);
 		Attatch_Text_to_Rect(rect, "yes", "StokkenesIT", sf::Color(0, 0, 0, 255), 0, true);
 		rect.setPosition(262.5f, 300);
 		rect.setSize(sf::Vector2f(137.5f, 50));
@@ -2656,7 +2781,7 @@ void Game::Draw_Start_Menu() {
 		else {
 			rect.setFillColor(sf::Color(255, 255, 255, 255));
 		}
-		window->draw(rect);
+		Fancy_Rect(rect, 10);
 		Attatch_Text_to_Rect(rect, "no", "StokkenesIT", sf::Color(0, 0, 0, 255), 0, true);
 	}
 }
@@ -2689,53 +2814,8 @@ void Game::Draw_Game() {
 void Game::Draw_Player() {
 	sf::Sprite sprite;
 
-	//player.setTexture(character[iCurrent_Chapter]);
-	//sprite.setTexture(character[iCurrent_Chapter]);
-
-	sf::Image copy = character[iCurrent_Chapter].copyToImage();
-
-	sf::Image outlined;
-
-	bool corners = true;
-	
-	outlined.create(10, 10);
-
-	for (int x = 0; x < 10; x++) {
-		for (int y = 0; y < 10; y++) {
-			outlined.setPixel(x, y, sf::Color(0, 0, 0, 0));
-		}
-	}
-
-	for (int x = 0; x < 8; x++) {
-		for (int y = 0; y < 8; y++) {
-			if (copy.getPixel(x, y).a != 0) {
-				for (int cX = 0; cX < 3; cX++) {
-					for (int cY = 0; cY < 3; cY++) {
-						if (corners || (cX == 1 || cY == 1)) {
-							outlined.setPixel(x + cX, y + cY, sf::Color(255, 255, 255));
-						}
-					}
-				}
-			}
-		}
-	}
-
-	sf::Image replaced = outlined;
-
-	for (int x = 0; x < 8; x++) {
-		for (int y = 0; y < 8; y++) {
-			if (copy.getPixel(x, y).a != 0) {
-				replaced.setPixel(x + 1, y + 1, copy.getPixel(x, y));
-			}
-		}
-	}
-
-	sf::Texture character_replaced;
-
-	character_replaced.loadFromImage(replaced);
-
-	player.setTexture(character_replaced);
-	sprite.setTexture(character_replaced);
+	player.setTexture(character[iCurrent_Chapter]);
+	sprite.setTexture(character[iCurrent_Chapter]);
 
 	sprite.setColor(sf::Color(0, 0, 0, 127));
 
@@ -2751,13 +2831,13 @@ void Game::Draw_Player() {
 	if (bRotation_With_Velocity[iCurrent_Chapter]) fRotation = fFlip_X * fFlip_Y * atan2(fVelocity_Y * fFlip_Y, fVelocity_X * fFlip_X) * 180 / 3.141;
 
 	sprite.setPosition(Get_Position_with_Zoom("x", fPosition_X * fGrid_Cell_Size + 24.f / 8), Get_Position_with_Zoom("y", fPosition_Y * fGrid_Cell_Size + 24.f / 8));
-	sprite.setOrigin(fGrid_Cell_Size / 6 * 1.2f, fGrid_Cell_Size / 6 * 1.2f);
-	sprite.setScale(sf::Vector2f(Get_Size_with_Zoom() * fGrid_Cell_Size / 8 / 1.2f * fFlip_X, Get_Size_with_Zoom() * fGrid_Cell_Size / 8 / 1.2f * fFlip_Y));
+	sprite.setOrigin(fGrid_Cell_Size / 6, fGrid_Cell_Size / 6);
+	sprite.setScale(sf::Vector2f(Get_Size_with_Zoom() * fGrid_Cell_Size / 8 * fFlip_X, Get_Size_with_Zoom() * fGrid_Cell_Size / 8 * fFlip_Y));
 	sprite.setRotation(fRotation);
 
 	player.setPosition(Get_Position_with_Zoom("x", fPosition_X * fGrid_Cell_Size), Get_Position_with_Zoom("y", fPosition_Y * fGrid_Cell_Size));
-	player.setOrigin(fGrid_Cell_Size / 6 * 1.2f, fGrid_Cell_Size / 6 * 1.2f);
-	player.setScale(sf::Vector2f(Get_Size_with_Zoom() * fGrid_Cell_Size / 8 / 1.2f * fFlip_X, Get_Size_with_Zoom() * fGrid_Cell_Size / 8 / 1.2f * fFlip_Y));
+	player.setOrigin(fGrid_Cell_Size / 6, fGrid_Cell_Size / 6);
+	player.setScale(sf::Vector2f(Get_Size_with_Zoom() * fGrid_Cell_Size / 8 * fFlip_X, Get_Size_with_Zoom() * fGrid_Cell_Size / 8 * fFlip_Y));
 	player.setRotation(fRotation);
 
 	pgCharacter.fPosition_X = Get_Position_with_Zoom("x", fPosition_X * fGrid_Cell_Size);
@@ -2823,30 +2903,15 @@ void Game::Draw_Glow() {
 }
 
 void Game::Draw_Gameplay() {
-	int sprite_Number = 0;
 	for (int column = 0; column < 20; column++) {
 		for (int row = int(fCamera_Position_X / fGrid_Cell_Size) - 1; row < int((game_Width + fCamera_Position_X) / fGrid_Cell_Size) + 1; row++) {
 			if (row >= 0 && row <= 79) {
 				if (map[iCurrent_Chapter][column][row] != 0) {
-					sf::Sprite sprite;
-					sf::Sprite shadow;
-
-					shadow.setScale(Get_Size_with_Zoom() * fGrid_Cell_Size / 8, Get_Size_with_Zoom() * fGrid_Cell_Size / 8);
-
-					shadow.setPosition(Get_Position_with_Zoom("x", row * fGrid_Cell_Size + fGrid_Cell_Size / 8), Get_Position_with_Zoom("y", column * fGrid_Cell_Size + fGrid_Cell_Size / 8));
-
-					shadow.setColor(sf::Color(0, 0, 0, 127));
-
-
-					sprite.setScale(Get_Size_with_Zoom() * fGrid_Cell_Size / 8, Get_Size_with_Zoom() * fGrid_Cell_Size / 8);
-
-					sprite.setPosition(Get_Position_with_Zoom("x", row * fGrid_Cell_Size), Get_Position_with_Zoom("y", column * fGrid_Cell_Size));
-
-					shadow.setTexture(txtrStatic_Block[iCurrent_Chapter][(map[iCurrent_Chapter][column][row] - 1) % 5][int(float(map[iCurrent_Chapter][column][row] - 1) / 5)]);
-					sprite.setTexture(txtrStatic_Block[iCurrent_Chapter][(map[iCurrent_Chapter][column][row] - 1) % 5][int(float(map[iCurrent_Chapter][column][row] - 1) / 5)]);
-
-					window->draw(shadow);
-					window->draw(sprite);
+					if (map[iCurrent_Chapter][column][row] < 16) {
+						Draw_Static_Block(map[iCurrent_Chapter][column][row], row, column);
+					} else {
+						Draw_Dynamic_Block(map[iCurrent_Chapter][column][row], row, column);
+					}
 				}
 			}
 		}
@@ -2860,6 +2925,121 @@ void Game::Draw_Gameplay() {
 				rect.setFillColor(sf::Color(0, 0, 0, 127));
 				window->draw(rect);
 			}
+		}
+	}
+}
+
+void Game::Draw_Static_Block(int Block, int Map_X, int Map_Y) {
+	sf::Sprite sprite;
+	sf::Sprite shadow;
+
+	shadow.setScale(Get_Size_with_Zoom() * fGrid_Cell_Size / 8, Get_Size_with_Zoom() * fGrid_Cell_Size / 8);
+
+	shadow.setPosition(Get_Position_with_Zoom("x", Map_X * fGrid_Cell_Size + fGrid_Cell_Size / 8), Get_Position_with_Zoom("y", Map_Y * fGrid_Cell_Size + fGrid_Cell_Size / 8));
+
+	shadow.setColor(sf::Color(0, 0, 0, 127));
+
+
+	sprite.setScale(Get_Size_with_Zoom() * fGrid_Cell_Size / 8, Get_Size_with_Zoom() * fGrid_Cell_Size / 8);
+
+	sprite.setPosition(Get_Position_with_Zoom("x", Map_X * fGrid_Cell_Size), Get_Position_with_Zoom("y", Map_Y * fGrid_Cell_Size));
+
+	shadow.setTexture(txtrStatic_Block[iCurrent_Chapter][(Block - 1) % 5][int(float(Block - 1) / 5)]);
+	sprite.setTexture(txtrStatic_Block[iCurrent_Chapter][(Block - 1) % 5][int(float(Block - 1) / 5)]);
+
+	window->draw(shadow);
+	window->draw(sprite);
+}
+
+void Game::Draw_Dynamic_Block(int Block, int Map_X, int Map_Y) {
+	sf::Sprite sprite;
+	sf::Sprite shadow;
+
+	int Corner;
+
+	bool Surround_Map[3][3];
+
+	bool Corner_Map[2][2][2][2];
+
+	for (int y = 0; y < 3; y++) {
+		for (int x = 0; x < 3; x++) {
+			if (Map_X + x - 1 < 0 || Map_X + x - 1 > 79 || Map_Y + y - 1 < 0 || Map_Y + y - 1 > 19) {
+				Surround_Map[x][y] = true;
+			}
+			else {
+				Surround_Map[x][y] = map[iCurrent_Chapter][Map_Y + y - 1][Map_X + x - 1] == Block;
+			}
+		}
+	}
+
+	for (int Corner_Y = 0; Corner_Y < 2; Corner_Y++) {
+		for (int Corner_X = 0; Corner_X < 2; Corner_X++) {
+			for (int Block_Y = 0; Block_Y < 2; Block_Y++) {
+				for (int Block_X = 0; Block_X < 2; Block_X++) {
+					Corner_Map[Corner_X][Corner_Y][Block_X][Block_Y] = Surround_Map[Corner_X == 0 ? 1 - Block_X : 1 + Block_X][Corner_Y == 0 ? 1 - Block_Y : 1 + Block_Y];
+				}
+			}
+		}
+	}
+
+	sprite.setOrigin(2, 2);
+	shadow.setOrigin(2, 2);
+
+	for (int Corner_X = 0; Corner_X < 2; Corner_X++) {
+		for (int Corner_Y = 0; Corner_Y < 2; Corner_Y++) {
+
+			sprite.setPosition(Get_Position_with_Zoom("x", Map_X * fGrid_Cell_Size + fGrid_Cell_Size / 2 * Corner_X + 2.f * fGrid_Cell_Size / 8), Get_Position_with_Zoom("y", Map_Y * fGrid_Cell_Size + fGrid_Cell_Size / 2 * Corner_Y + 2.f * fGrid_Cell_Size / 8));
+			shadow.setPosition(Get_Position_with_Zoom("x", Map_X * fGrid_Cell_Size + fGrid_Cell_Size / 2 * Corner_X + 2.f * fGrid_Cell_Size / 8 + fGrid_Cell_Size / 8), Get_Position_with_Zoom("y", Map_Y * fGrid_Cell_Size + fGrid_Cell_Size / 2 * Corner_Y + 2.f * fGrid_Cell_Size / 8 + fGrid_Cell_Size / 8));
+
+			sprite.setScale(Get_Size_with_Zoom() * fGrid_Cell_Size / 8, Get_Size_with_Zoom() * fGrid_Cell_Size / 8);
+			shadow.setScale(Get_Size_with_Zoom() * fGrid_Cell_Size / 8, Get_Size_with_Zoom() * fGrid_Cell_Size / 8);
+
+			if (!Corner_Map[Corner_X][Corner_Y][1][0] && !Corner_Map[Corner_X][Corner_Y][0][1]) {
+				Corner = 0;
+
+				if (Corner_X == 0 && Corner_Y == 0) sprite.setRotation(0);
+				if (Corner_X == 1 && Corner_Y == 0) sprite.setRotation(90);
+				if (Corner_X == 0 && Corner_Y == 1) sprite.setRotation(-90);
+				if (Corner_X == 1 && Corner_Y == 1) sprite.setRotation(180);
+			}
+			else if ((Corner_Map[Corner_X][Corner_Y][1][0] && !Corner_Map[Corner_X][Corner_Y][0][1]) || (!Corner_Map[Corner_X][Corner_Y][1][0] && Corner_Map[Corner_X][Corner_Y][0][1])) {
+				Corner = 1;
+
+				if (Corner_Map[Corner_X][Corner_Y][1][0]) {
+					if (Corner_Y == 0) sprite.setRotation(0);
+					if (Corner_Y == 1) sprite.setRotation(180);
+				}
+				else {
+					if (Corner_X == 0) sprite.setRotation(-90);
+					if (Corner_X == 1) sprite.setRotation(90);
+				} 
+			}
+			else if (Corner_Map[Corner_X][Corner_Y][1][0] && Corner_Map[Corner_X][Corner_Y][0][1] && !Corner_Map[Corner_X][Corner_Y][1][1]) {
+				Corner = 2;
+
+				if (Corner_X == 0 && Corner_Y == 0) sprite.setRotation(0);
+				if (Corner_X == 1 && Corner_Y == 0) sprite.setRotation(90);
+				if (Corner_X == 0 && Corner_Y == 1) sprite.setRotation(-90);
+				if (Corner_X == 1 && Corner_Y == 1) sprite.setRotation(180);
+			}
+			else {
+				Corner = 3;
+
+				if (Corner_X == 0 && Corner_Y == 0) sprite.setRotation(0);
+			}
+
+			sprite.setTexture(txtrDynamic_Block[iCurrent_Chapter][Block - 16][Corner]);
+
+			shadow.setTexture(txtrDynamic_Block[iCurrent_Chapter][Block - 16][Corner]);
+
+
+			shadow.setRotation(sprite.getRotation());
+
+			shadow.setColor(sf::Color(0, 0, 0, 127));
+
+			window->draw(shadow);
+			window->draw(sprite);
+
 		}
 	}
 }
@@ -3064,7 +3244,7 @@ int Game::Value_Holder(float The_Position_X, float The_Position_Y, int The_Size_
 			}
 		}
 	}
-	window->draw(rect);
+	Fancy_Rect(rect, 2);
 
 	return The_Int;
 }
@@ -3084,11 +3264,11 @@ bool Game::Toggle_Switch(float The_Position_X, float The_Position_Y, bool The_Bo
 				The_Boolean = !The_Boolean;
 			}
 		}
-		window->draw(rect);
+		Fancy_Rect(rect, 4);
 		rect.setSize(sf::Vector2f(rect.getSize().x, float(rect.getSize().y) / 2));
 		rect.setPosition(rect.getPosition().x, rect.getPosition().y + rect.getSize().y * The_Boolean);
 		rect.setFillColor(sf::Color(rect.getFillColor().r + 8, rect.getFillColor().g + 8, rect.getFillColor().b + 8));
-		window->draw(rect);
+		Fancy_Rect(rect, 2);
 		Text(The_Boolean ? "on" : "off", "StokkenesIT", rect.getPosition().x + float(rect.getSize().x) / 2 - 1, rect.getPosition().y + rect.getSize().y * !The_Boolean * 2 - rect.getSize().y + 1, 16, sf::Color(191, 191, 191), 0, false);
 	}
 	else {
@@ -3104,14 +3284,39 @@ bool Game::Toggle_Switch(float The_Position_X, float The_Position_Y, bool The_Bo
 				The_Boolean = !The_Boolean;
 			}
 		}
-		window->draw(rect);
+		Fancy_Rect(rect, 4);
 		rect.setSize(sf::Vector2f(float(rect.getSize().x) / 2, rect.getSize().y));
 		rect.setPosition(rect.getPosition().x + rect.getSize().x * The_Boolean, rect.getPosition().y);
 		rect.setFillColor(sf::Color(rect.getFillColor().r + 8, rect.getFillColor().g + 8, rect.getFillColor().b + 8));
-		window->draw(rect);
-		Text(The_Boolean ? "on" : "off", "StokkenesIT", rect.getPosition().x + rect.getSize().x * !The_Boolean * 2 - float(rect.getSize().x) / 2 - 1, rect.getPosition().y + 1, 16, sf::Color(23, 23, 23), 0, false);
+		Fancy_Rect(rect, 2);
+		Text(The_Boolean ? "on" : "off", "StokkenesIT", rect.getPosition().x + rect.getSize().x * !The_Boolean * 2 - float(rect.getSize().x) / 2 - 1, rect.getPosition().y + 1, 16, sf::Color(191, 191, 191), 0, false);
 	}
 	return The_Boolean;
+}
+
+void Game::Fancy_Rect(sf::RectangleShape rect, int Round_Edge) {
+	sf::RectangleShape TEMP = rect;
+
+	TEMP.setSize(sf::Vector2f(rect.getSize().x, rect.getSize().y - Round_Edge * 2));
+	TEMP.setPosition(rect.getPosition().x, rect.getPosition().y + Round_Edge);
+	window->draw(TEMP);
+
+	TEMP.setSize(sf::Vector2f(rect.getSize().x - Round_Edge * 2, rect.getSize().y));
+	TEMP.setPosition(rect.getPosition().x + Round_Edge, rect.getPosition().y);
+	window->draw(TEMP);
+
+	sf::CircleShape Corner;
+	Corner.setFillColor(rect.getFillColor());
+	Corner.setRadius(Round_Edge);
+
+	Corner.setPosition(rect.getPosition());
+	window->draw(Corner);
+	Corner.setPosition(rect.getPosition().x + rect.getSize().x - Corner.getRadius() * 2, rect.getPosition().y + rect.getSize().y - Corner.getRadius() * 2);
+	window->draw(Corner);
+	Corner.setPosition(rect.getPosition().x + rect.getSize().x - Corner.getRadius() * 2, rect.getPosition().y);
+	window->draw(Corner);
+	Corner.setPosition(rect.getPosition().x, rect.getPosition().y + rect.getSize().y - Corner.getRadius() * 2);
+	window->draw(Corner);
 }
 
 bool Game::Mouse_is_Hovering_Rect(sf::RectangleShape rect) {
@@ -3159,7 +3364,6 @@ void Game::Goto_Chapter(int The_Chapter) {
 }
 
 void Game::Save() {
-	Save_Sidebar_Width();
 	for (int i = 0; i < 5; i++) {
 		ofstream createFile("saves/levels/" + to_string(i) + ".txt");
 		Save_Editor(createFile, i);
@@ -3169,12 +3373,6 @@ void Game::Save() {
 		Save_Background_Properties(createFile, i);
 		createFile.close();
 	}
-}
-
-void Game::Save_Sidebar_Width() {
-	ofstream createFile("saves/sidebar_width.txt");
-	createFile << iEditor_Sidebar_Width;
-	createFile.close();
 }
 
 void Game::Save_Editor(ofstream& createFile, int i) {
@@ -3246,12 +3444,15 @@ void Game::Save_Block_Properties(ofstream& createFile, int i) {
 		}
 	}
 	for (int x = 0; x < 5; x++) {
-		for (int pY = 0; pY < 8; pY++) {
-			for (int pX = 0; pX < 8; pX++) {
-				createFile << int(imgDynamic_Block[i][x].getPixel(pX, pY).r) << " ";
-				createFile << int(imgDynamic_Block[i][x].getPixel(pX, pY).g) << " ";
-				createFile << int(imgDynamic_Block[i][x].getPixel(pX, pY).b) << " ";
-				createFile << int(imgDynamic_Block[i][x].getPixel(pX, pY).a) << "  ";
+		for (int pY = 0; pY < 4; pY++) {
+			for (int img = 0; img < 4; img++) {
+				for (int pX = 0; pX < 4; pX++) {
+					createFile << int(imgDynamic_Block[i][x][img].getPixel(pX, pY).r) << " ";
+					createFile << int(imgDynamic_Block[i][x][img].getPixel(pX, pY).g) << " ";
+					createFile << int(imgDynamic_Block[i][x][img].getPixel(pX, pY).b) << " ";
+					createFile << int(imgDynamic_Block[i][x][img].getPixel(pX, pY).a) << "  ";
+				}
+				createFile << " ";
 			}
 			createFile << "\n";
 		}
@@ -3318,114 +3519,10 @@ float Game::Get_Position_with_Zoom(const char* The_Axis_Id, float The_Axis_Pos) 
 	}
 };
 
-int Game::Get_Sprite_Number(const char* The_Sprite, int The_Block_Number, int The_Column, int The_Row, bool Is_Grouped) {
-	int nw, n, ne, w, e, sw, s, se;
-	nw	= map[iCurrent_Chapter][The_Column - 1][The_Row - 1];
-	n	= map[iCurrent_Chapter][The_Column - 1][The_Row    ];
-	ne	= map[iCurrent_Chapter][The_Column - 1][The_Row + 1];
-	w	= map[iCurrent_Chapter][The_Column    ][The_Row - 1];
-	e	= map[iCurrent_Chapter][The_Column	  ][The_Row + 1];
-	sw	= map[iCurrent_Chapter][The_Column + 1][The_Row - 1];
-	s	= map[iCurrent_Chapter][The_Column + 1][The_Row    ];
-	se	= map[iCurrent_Chapter][The_Column + 1][The_Row + 1];
-	if (The_Sprite == "block") {
-		if (Is_Grouped) {
-			if (n != The_Block_Number && s == The_Block_Number && The_Column != 0 || n != The_Block_Number && The_Column == 19) {
-				if (w != The_Block_Number && e == The_Block_Number && The_Row != 0 || w != The_Block_Number && The_Row == 79 && The_Row != 0) {
-					return 0;
-				}
-				else if (w == The_Block_Number && e == The_Block_Number || w == The_Block_Number && The_Row == 79 || The_Row == 0 && e == The_Block_Number) {
-					return 1;
-				}
-				else if (w == The_Block_Number && e != The_Block_Number && The_Row != 79 || The_Row == 0 && e != The_Block_Number && The_Row != 79) {
-					return 2;
-				}
-			}
-			else if (n == The_Block_Number && s == The_Block_Number || n == The_Block_Number && The_Column == 19 || The_Column == 0 && s == The_Block_Number) {
-				if (w != The_Block_Number && e == The_Block_Number && The_Row != 0 || w != The_Block_Number && The_Row == 79 && The_Row != 0) {
-					return 3;
-				}
-				else if (w == The_Block_Number && e == The_Block_Number || w == The_Block_Number && The_Row == 79 || The_Row == 0 && e == The_Block_Number) {
-					if (nw != The_Block_Number && The_Column != 0 && The_Row != 0) {
-						return 9;
-					}
-					else if (ne != The_Block_Number && The_Column != 0 && The_Row != 79) {
-						return 10;
-					}
-					else if (se != The_Block_Number && The_Column != 19 && The_Row != 79) {
-						return 11;
-					}
-					else if (sw != The_Block_Number && The_Column != 19 && The_Row != 0) {
-						return 12;
-					}
-					return 4;
-				}
-				else if (w == The_Block_Number && e != The_Block_Number && The_Row != 79 || The_Row == 0 && e != The_Block_Number && The_Row != 79) {
-					return 5;
-				}
-			}
-			else if (n == The_Block_Number && s != The_Block_Number && The_Column != 19 || The_Column == 0 && s != The_Block_Number) {
-				if (w != The_Block_Number && e == The_Block_Number && The_Row != 0 || w != The_Block_Number && The_Row == 79 && The_Row != 0) {
-					return 6;
-				}
-				else if (w == The_Block_Number && e == The_Block_Number || w == The_Block_Number && The_Row == 79 || The_Row == 0 && e == The_Block_Number) {
-					return 7;
-				}
-				else if (w == The_Block_Number && e != The_Block_Number && The_Row != 79 || The_Row == 0 && e != The_Block_Number && The_Row != 79) {
-					return 8;
-				}
-			}
-		}
-		else {
-			if (map[iCurrent_Chapter][The_Column - 1][The_Row] == 0 && map[iCurrent_Chapter][The_Column + 1][The_Row] != 0 && The_Column != 0 || map[iCurrent_Chapter][The_Column - 1][The_Row] == 0 && The_Column == 19) {
-				if (map[iCurrent_Chapter][The_Column][The_Row - 1] == 0 && map[iCurrent_Chapter][The_Column][The_Row + 1] != 0 && The_Row != 0 || map[iCurrent_Chapter][The_Column][The_Row - 1] == 0 && The_Row == 79 && The_Row != 0) {
-					return 0;
-				}
-				else if (map[iCurrent_Chapter][The_Column][The_Row - 1] != 0 && map[iCurrent_Chapter][The_Column][The_Row + 1] != 0 || map[iCurrent_Chapter][The_Column][The_Row - 1] != 0 && The_Row == 79 || The_Row == 0 && map[iCurrent_Chapter][The_Column][The_Row + 1] != 0) {
-					return 1;
-				}
-				else if (map[iCurrent_Chapter][The_Column][The_Row - 1] != 0 && map[iCurrent_Chapter][The_Column][The_Row + 1] == 0 && The_Row != 79 || The_Row == 0 && map[iCurrent_Chapter][The_Column][The_Row + 1] == 0 && The_Row != 79) {
-					return 2;
-				}
-			}
-			else if (map[iCurrent_Chapter][The_Column - 1][The_Row] != 0 && map[iCurrent_Chapter][The_Column + 1][The_Row] != 0 || map[iCurrent_Chapter][The_Column - 1][The_Row] != 0 && The_Column == 19 || The_Column == 0 && map[iCurrent_Chapter][The_Column + 1][The_Row] != The_Block_Number) {
-				if (map[iCurrent_Chapter][The_Column][The_Row - 1] == 0 && map[iCurrent_Chapter][The_Column][The_Row + 1] != 0 && The_Row != 0 || map[iCurrent_Chapter][The_Column][The_Row - 1] == 0 && The_Row == 79 && The_Row != 0) {
-					return 3;
-				}
-				else if (map[iCurrent_Chapter][The_Column][The_Row - 1] != 0 && map[iCurrent_Chapter][The_Column][The_Row + 1] != 0 || map[iCurrent_Chapter][The_Column][The_Row - 1] != 0 && The_Row == 79 || The_Row == 0 && map[iCurrent_Chapter][The_Column][The_Row + 1] != The_Block_Number) {
-					if (map[iCurrent_Chapter][The_Column - 1][The_Row - 1] == 0 && The_Column != 0 && The_Row != 0) {
-						return 9;
-					}
-					else if (map[iCurrent_Chapter][The_Column - 1][The_Row + 1] == 0 && The_Column != 0 && The_Row != 79) {
-						return 10;
-					}
-					else if (map[iCurrent_Chapter][The_Column + 1][The_Row + 1] == 0 && The_Column != 19 && The_Row != 79) {
-						return 11;
-					}
-					else if (map[iCurrent_Chapter][The_Column + 1][The_Row - 1] == 0 && The_Column != 19 && The_Row != 0) {
-						return 12;
-					}
-					return 4;
-				}
-				else if (map[iCurrent_Chapter][The_Column][The_Row - 1] != 0 && map[iCurrent_Chapter][The_Column][The_Row + 1] == 0 && The_Row != 79 || The_Row == 0 && map[iCurrent_Chapter][The_Column][The_Row + 1] == 0 && The_Row != 79) {
-					return 5;
-				}
-			}
-			else if (map[iCurrent_Chapter][The_Column - 1][The_Row] != 0 && map[iCurrent_Chapter][The_Column + 1][The_Row] == 0 && The_Column != 19 || The_Column == 0 && map[iCurrent_Chapter][The_Column + 1][The_Row] == 0) {
-				if (map[iCurrent_Chapter][The_Column][The_Row - 1] == 0 && map[iCurrent_Chapter][The_Column][The_Row + 1] != 0 && The_Row != 0 || map[iCurrent_Chapter][The_Column][The_Row - 1] == 0 && The_Row == 79 && The_Row != 0) {
-					return 6;
-				}
-				else if (map[iCurrent_Chapter][The_Column][The_Row - 1] != 0 && map[iCurrent_Chapter][The_Column][The_Row + 1] != 0 || map[iCurrent_Chapter][The_Column][The_Row - 1] != 0 && The_Row == 79 || The_Row == 0 && map[iCurrent_Chapter][The_Column][The_Row + 1] != The_Block_Number) {
-					return 7;
-				}
-				else if (map[iCurrent_Chapter][The_Column][The_Row - 1] != 0 && map[iCurrent_Chapter][The_Column][The_Row + 1] == 0 && The_Row != 79 || The_Row == 0 && map[iCurrent_Chapter][The_Column][The_Row + 1] == 0 && The_Row != 79) {
-					return 8;
-				}
-			}
-		}
-	}
-	return 4;
-};
+int Game::Get_Dynamic_Block_Corner(int Block, int Map_X, int Map_Y, int Block_X, int Block_Y) {
+
+	return 0;
+}
 
 void Game::Particle_Group::Set_Total(int The_Total) {
 	Particle* particle = new Particle[The_Total];

@@ -176,13 +176,6 @@ public:
 	float	dragX;
 	float	dragY;
 
-	int		iEditor_Sidebar_Width = 75;
-	int		iEditor_Sidebar_Min_Width = 40;
-	int		iEditor_Sidebar_Max_Width = 150;
-	float	fEditor_Items_Width = 0.8;
-
-	bool	bResizing_On_Edge = false;
-
 	bool	right_Side;
 	bool	no_Selected;
 
@@ -226,6 +219,7 @@ public:
 
 	bool	bStatic_Block_Selected[5][3];
 	bool	bDynamic_Block_Selected[5];
+	bool	bDynamic_Block_Corner_Selected[4];
 	bool	bDrawing_Character;
 
 	bool	bPaint_Select_Tool[8][8];
@@ -277,7 +271,7 @@ public:
 
 
 	sf::Image imgStatic_Block[5][5][3];
-	sf::Image imgDynamic_Block[5][5];
+	sf::Image imgDynamic_Block[5][5][4];
 
 
 	int		arrColor							[5][3][3]	;
@@ -317,7 +311,6 @@ public:
 	void Update_Editor();
 	void Update_Editor_Layer_1();
 	void Update_Editor_Layer_2();
-	//void Update_Editor_Sidebar();
 	void Update_Dead();
 	void Update_Decoration();
 	void Update_Particles();
@@ -343,19 +336,21 @@ public:
 	void Draw_Respawn();
 	void Draw_Glow();
 	void Draw_Gameplay();
+	void Draw_Static_Block(int Block, int Map_X, int Map_Y);
+	void Draw_Dynamic_Block(int Block, int Map_X, int Map_Y);
 	void Draw_Editor_Triggers();
 	void Draw_Decoration();
 	void Draw_Particles();
 	void Draw_Editor();
 	void Draw_Editor_Grid();
-	//void Draw_Editor_Sidebar();
-	//void Draw_Editor_Items();
 
 	void Text(string The_Text, string The_Font, float The_Position_X, float The_Position_Y, int The_Font_Size, sf::Color col, int The_Offset_X, bool Shadow);
 	void Attatch_Text_to_Rect(sf::RectangleShape rect, string The_Text, string The_Font, sf::Color col, int The_Offset_X, bool Shadow);
 
 	bool Toggle_Switch(float The_Position_X, float The_Position_Y, bool The_Boolean, bool Is_Vertical);
 	int Value_Holder(float The_Position_X, float The_Position_Y, int The_Size_X, int The_Size_Y, int The_Minimum, int The_Maximum, int The_Int);
+
+	void Fancy_Rect(sf::RectangleShape rect, int Round_Edge);
 
 	bool Mouse_is_Hovering_Rect(sf::RectangleShape rect);
 
@@ -365,7 +360,6 @@ public:
 	void Goto_Chapter(int The_Chapter);
 
 	void Save();
-	void Save_Sidebar_Width();
 	void Save_Editor(ofstream& createFile, int i);
 	void Save_Character_Properties(ofstream& createFile, int i);
 	void Save_Block_Properties(ofstream& createFile, int i);
@@ -377,7 +371,8 @@ public:
 	static float	Get_Size_with_Zoom();
 	float	Get_Origin_with_Zoom(const char* The_Axis_Id);
 	static float	Get_Position_with_Zoom(const char* The_Axis_Id, float The_Axis_Pos);
-	int		Get_Sprite_Number(const char* The_Sprite, int The_Block_Number, int The_Column, int The_Row, bool Is_Grouped);
+
+	int Get_Dynamic_Block_Corner(int Block, int Map_X, int Map_Y, int Block_X, int Block_Y);
 
 
 
